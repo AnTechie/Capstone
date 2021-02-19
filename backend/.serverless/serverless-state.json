@@ -6,13 +6,20 @@
     },
     "provider": {
       "name": "aws",
-      "runtime": "nodejs12.x",
-      "lambdaHashingVersion": "20201221",
+      "runtime": "nodejs10.x",
+      "tracing": {
+        "lambda": true,
+        "apiGateway": true
+      },
       "stage": "dev",
       "region": "us-west-2",
       "environment": {
-        "POSTS_TABLE": "Posts3-dev",
-        "POST_ID_INDEX": "PostIdIndex"
+        "POSTS_TABLE": "Posts8-dev",
+        "POST_ID_INDEX": "PostIdIndex",
+        "IMAGES_S3_BUCKET": "serverless-udagram-postss-dev",
+        "SIGNED_URL_EXPIRATION": "300",
+        "AUTH_0_SECRET_ID": "PostAuth0Secret-dev",
+        "AUTH_0_SECRET_FIELD": "Postauth0Secret"
       },
       "variableSyntax": "\\${([^{}:]+?(?:\\(|:)(?:[^:{}][^{}]*?)?)}",
       "versionFunctions": true,
@@ -95,6 +102,12 @@
               "LogGroupName": "/aws/lambda/serverless-forum-app-dev-hello"
             }
           },
+          "AuthLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/serverless-forum-app-dev-Auth"
+            }
+          },
           "GetPosts1LogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
@@ -113,10 +126,16 @@
               "LogGroupName": "/aws/lambda/serverless-forum-app-dev-UpdatePost"
             }
           },
-          "DeletePostLogGroup": {
+          "DeletePost2LogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
-              "LogGroupName": "/aws/lambda/serverless-forum-app-dev-DeletePost"
+              "LogGroupName": "/aws/lambda/serverless-forum-app-dev-DeletePost2"
+            }
+          },
+          "GetUploadUrlLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/serverless-forum-app-dev-GetUploadUrl"
             }
           },
           "IamRoleLambdaExecution": {
@@ -175,6 +194,16 @@
                             "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/serverless-forum-app-dev*:*:*"
                           }
                         ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "xray:PutTraceSegments",
+                          "xray:PutTelemetryRecords"
+                        ],
+                        "Resource": [
+                          "*"
+                        ]
                       }
                     ]
                   }
@@ -203,17 +232,24 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/serverless-forum-app/dev/1613635335197-2021-02-18T08:02:15.197Z/serverless-forum-app.zip"
+                "S3Key": "serverless/serverless-forum-app/dev/1613777483169-2021-02-19T23:31:23.169Z/serverless-forum-app.zip"
               },
               "Handler": "handler.hello",
-              "Runtime": "nodejs12.x",
+              "Runtime": "nodejs10.x",
               "FunctionName": "serverless-forum-app-dev-hello",
               "MemorySize": 1024,
               "Timeout": 6,
+              "TracingConfig": {
+                "Mode": "Active"
+              },
               "Environment": {
                 "Variables": {
-                  "POSTS_TABLE": "Posts3-dev",
-                  "POST_ID_INDEX": "PostIdIndex"
+                  "POSTS_TABLE": "Posts8-dev",
+                  "POST_ID_INDEX": "PostIdIndex",
+                  "IMAGES_S3_BUCKET": "serverless-udagram-postss-dev",
+                  "SIGNED_URL_EXPIRATION": "300",
+                  "AUTH_0_SECRET_ID": "PostAuth0Secret-dev",
+                  "AUTH_0_SECRET_FIELD": "Postauth0Secret"
                 }
               },
               "Role": {
@@ -227,6 +263,44 @@
               "HelloLogGroup"
             ]
           },
+          "AuthLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/serverless-forum-app/dev/1613777483169-2021-02-19T23:31:23.169Z/serverless-forum-app.zip"
+              },
+              "Handler": "src/lambda/auth/auth0Authorizer.handler",
+              "Runtime": "nodejs10.x",
+              "FunctionName": "serverless-forum-app-dev-Auth",
+              "MemorySize": 1024,
+              "Timeout": 6,
+              "TracingConfig": {
+                "Mode": "Active"
+              },
+              "Environment": {
+                "Variables": {
+                  "POSTS_TABLE": "Posts8-dev",
+                  "POST_ID_INDEX": "PostIdIndex",
+                  "IMAGES_S3_BUCKET": "serverless-udagram-postss-dev",
+                  "SIGNED_URL_EXPIRATION": "300",
+                  "AUTH_0_SECRET_ID": "PostAuth0Secret-dev",
+                  "AUTH_0_SECRET_FIELD": "Postauth0Secret"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "AuthLogGroup"
+            ]
+          },
           "GetPosts1LambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
@@ -234,17 +308,24 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/serverless-forum-app/dev/1613635335197-2021-02-18T08:02:15.197Z/serverless-forum-app.zip"
+                "S3Key": "serverless/serverless-forum-app/dev/1613777483169-2021-02-19T23:31:23.169Z/serverless-forum-app.zip"
               },
               "Handler": "src/lambda/http/getPosts.handler",
-              "Runtime": "nodejs12.x",
+              "Runtime": "nodejs10.x",
               "FunctionName": "serverless-forum-app-dev-GetPosts1",
               "MemorySize": 1024,
               "Timeout": 6,
+              "TracingConfig": {
+                "Mode": "Active"
+              },
               "Environment": {
                 "Variables": {
-                  "POSTS_TABLE": "Posts3-dev",
-                  "POST_ID_INDEX": "PostIdIndex"
+                  "POSTS_TABLE": "Posts8-dev",
+                  "POST_ID_INDEX": "PostIdIndex",
+                  "IMAGES_S3_BUCKET": "serverless-udagram-postss-dev",
+                  "SIGNED_URL_EXPIRATION": "300",
+                  "AUTH_0_SECRET_ID": "PostAuth0Secret-dev",
+                  "AUTH_0_SECRET_FIELD": "Postauth0Secret"
                 }
               },
               "Role": {
@@ -266,17 +347,24 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/serverless-forum-app/dev/1613635335197-2021-02-18T08:02:15.197Z/serverless-forum-app.zip"
+                "S3Key": "serverless/serverless-forum-app/dev/1613777483169-2021-02-19T23:31:23.169Z/serverless-forum-app.zip"
               },
               "Handler": "src/lambda/http/createPost.handler",
-              "Runtime": "nodejs12.x",
+              "Runtime": "nodejs10.x",
               "FunctionName": "serverless-forum-app-dev-CreatePost",
               "MemorySize": 1024,
               "Timeout": 6,
+              "TracingConfig": {
+                "Mode": "Active"
+              },
               "Environment": {
                 "Variables": {
-                  "POSTS_TABLE": "Posts3-dev",
-                  "POST_ID_INDEX": "PostIdIndex"
+                  "POSTS_TABLE": "Posts8-dev",
+                  "POST_ID_INDEX": "PostIdIndex",
+                  "IMAGES_S3_BUCKET": "serverless-udagram-postss-dev",
+                  "SIGNED_URL_EXPIRATION": "300",
+                  "AUTH_0_SECRET_ID": "PostAuth0Secret-dev",
+                  "AUTH_0_SECRET_FIELD": "Postauth0Secret"
                 }
               },
               "Role": {
@@ -298,109 +386,184 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/serverless-forum-app/dev/1613635335197-2021-02-18T08:02:15.197Z/serverless-forum-app.zip"
+                "S3Key": "serverless/serverless-forum-app/dev/1613777483169-2021-02-19T23:31:23.169Z/serverless-forum-app.zip"
               },
               "Handler": "src/lambda/http/updatePost.handler",
-              "Runtime": "nodejs12.x",
+              "Runtime": "nodejs10.x",
               "FunctionName": "serverless-forum-app-dev-UpdatePost",
               "MemorySize": 1024,
               "Timeout": 6,
+              "TracingConfig": {
+                "Mode": "Active"
+              },
               "Environment": {
                 "Variables": {
-                  "POSTS_TABLE": "Posts3-dev",
-                  "POST_ID_INDEX": "PostIdIndex"
+                  "POSTS_TABLE": "Posts8-dev",
+                  "POST_ID_INDEX": "PostIdIndex",
+                  "IMAGES_S3_BUCKET": "serverless-udagram-postss-dev",
+                  "SIGNED_URL_EXPIRATION": "300",
+                  "AUTH_0_SECRET_ID": "PostAuth0Secret-dev",
+                  "AUTH_0_SECRET_FIELD": "Postauth0Secret"
                 }
               },
               "Role": {
                 "Fn::GetAtt": [
-                  "IamRoleLambdaExecution",
+                  "UpdatePostIamRoleLambdaExecution",
                   "Arn"
                 ]
               }
             },
             "DependsOn": [
+              "UpdatePostIamRoleLambdaExecution",
               "UpdatePostLogGroup"
             ]
           },
-          "DeletePostLambdaFunction": {
+          "DeletePost2LambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
               "Code": {
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/serverless-forum-app/dev/1613635335197-2021-02-18T08:02:15.197Z/serverless-forum-app.zip"
+                "S3Key": "serverless/serverless-forum-app/dev/1613777483169-2021-02-19T23:31:23.169Z/serverless-forum-app.zip"
               },
               "Handler": "src/lambda/http/deletePost.handler",
-              "Runtime": "nodejs12.x",
-              "FunctionName": "serverless-forum-app-dev-DeletePost",
+              "Runtime": "nodejs10.x",
+              "FunctionName": "serverless-forum-app-dev-DeletePost2",
               "MemorySize": 1024,
               "Timeout": 6,
+              "TracingConfig": {
+                "Mode": "Active"
+              },
               "Environment": {
                 "Variables": {
-                  "POSTS_TABLE": "Posts3-dev",
-                  "POST_ID_INDEX": "PostIdIndex"
+                  "POSTS_TABLE": "Posts8-dev",
+                  "POST_ID_INDEX": "PostIdIndex",
+                  "IMAGES_S3_BUCKET": "serverless-udagram-postss-dev",
+                  "SIGNED_URL_EXPIRATION": "300",
+                  "AUTH_0_SECRET_ID": "PostAuth0Secret-dev",
+                  "AUTH_0_SECRET_FIELD": "Postauth0Secret"
                 }
               },
               "Role": {
                 "Fn::GetAtt": [
-                  "IamRoleLambdaExecution",
+                  "DeletePost2IamRoleLambdaExecution",
                   "Arn"
                 ]
               }
             },
             "DependsOn": [
-              "DeletePostLogGroup"
+              "DeletePost2IamRoleLambdaExecution",
+              "DeletePost2LogGroup"
             ]
           },
-          "HelloLambdaVersionthkaZfvearDdnBrJT6QiEeW0Nu6wnvkEljkmYjEUY": {
+          "GetUploadUrlLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/serverless-forum-app/dev/1613777483169-2021-02-19T23:31:23.169Z/serverless-forum-app.zip"
+              },
+              "Handler": "src/lambda/http/getUploadUrl.handler",
+              "Runtime": "nodejs10.x",
+              "FunctionName": "serverless-forum-app-dev-GetUploadUrl",
+              "MemorySize": 1024,
+              "Timeout": 6,
+              "TracingConfig": {
+                "Mode": "Active"
+              },
+              "Environment": {
+                "Variables": {
+                  "POSTS_TABLE": "Posts8-dev",
+                  "POST_ID_INDEX": "PostIdIndex",
+                  "IMAGES_S3_BUCKET": "serverless-udagram-postss-dev",
+                  "SIGNED_URL_EXPIRATION": "300",
+                  "AUTH_0_SECRET_ID": "PostAuth0Secret-dev",
+                  "AUTH_0_SECRET_FIELD": "Postauth0Secret"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "GetUploadUrlIamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "GetUploadUrlIamRoleLambdaExecution",
+              "GetUploadUrlLogGroup"
+            ]
+          },
+          "AuthLambdaVersionTWO819v8RBC1DjayNIp2ABYNK7nNzlthwO6ek3mP6N8": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "AuthLambdaFunction"
+              },
+              "CodeSha256": "ZhAnxd9b5XVYdNU6GcHAfL2Bnh8TEtXuw3Qm7i7nkOE="
+            }
+          },
+          "HelloLambdaVersionrxfQneKhmYssJ9iOA4t60GJa57KWNGxONm9wYvqs6E": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "HelloLambdaFunction"
               },
-              "CodeSha256": "2AGZwR8XL93hJKo0sqkl5gas4aiGceeEtQBx/Xo5W68="
+              "CodeSha256": "ZhAnxd9b5XVYdNU6GcHAfL2Bnh8TEtXuw3Qm7i7nkOE="
             }
           },
-          "GetPosts1LambdaVersion7gLR1SlJoqTXNmhVelLTE5fkI427FKp1NYOihQg4y0": {
+          "GetPosts1LambdaVersionvUTzHJhaGFeb9srep8Y2iERY3W0XmzikDYibdmiNozE": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "GetPosts1LambdaFunction"
               },
-              "CodeSha256": "2AGZwR8XL93hJKo0sqkl5gas4aiGceeEtQBx/Xo5W68="
+              "CodeSha256": "ZhAnxd9b5XVYdNU6GcHAfL2Bnh8TEtXuw3Qm7i7nkOE="
             }
           },
-          "CreatePostLambdaVersionzS12FmTEUAddiHhlyB43niygCKGbCdAqbjROQJztQ8": {
+          "CreatePostLambdaVersionqqP95zf8rXDztYEOrUxeS3meFpOeHDFYrAQGJLs": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "CreatePostLambdaFunction"
               },
-              "CodeSha256": "2AGZwR8XL93hJKo0sqkl5gas4aiGceeEtQBx/Xo5W68="
+              "CodeSha256": "ZhAnxd9b5XVYdNU6GcHAfL2Bnh8TEtXuw3Qm7i7nkOE="
             }
           },
-          "UpdatePostLambdaVersionOZUcXEOYLp9Xp6Y8KdC0dCYj2n5KNyaWYR2LEZl03Q": {
+          "UpdatePostLambdaVersion4ccvfl5IILmfaaHfkaWewQxuttlcs8f0Zs7KtSvo8": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "UpdatePostLambdaFunction"
               },
-              "CodeSha256": "2AGZwR8XL93hJKo0sqkl5gas4aiGceeEtQBx/Xo5W68="
+              "CodeSha256": "ZhAnxd9b5XVYdNU6GcHAfL2Bnh8TEtXuw3Qm7i7nkOE="
             }
           },
-          "DeletePostLambdaVersion8b1hFjf8TfRdk2GDsV14c4v7Keh82HlkH9chTf8NM8": {
+          "DeletePost2LambdaVersiongXiNrO0l6ogdaIfbGtAlzykcHsCNuLxSF9Njv4gHB2k": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
-                "Ref": "DeletePostLambdaFunction"
+                "Ref": "DeletePost2LambdaFunction"
               },
-              "CodeSha256": "2AGZwR8XL93hJKo0sqkl5gas4aiGceeEtQBx/Xo5W68="
+              "CodeSha256": "ZhAnxd9b5XVYdNU6GcHAfL2Bnh8TEtXuw3Qm7i7nkOE="
+            }
+          },
+          "GetUploadUrlLambdaVersionQCGf19NSmPszqaTnbVDKFtnL74FONNx5ImfKuqQpfY": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "GetUploadUrlLambdaFunction"
+              },
+              "CodeSha256": "ZhAnxd9b5XVYdNU6GcHAfL2Bnh8TEtXuw3Qm7i7nkOE="
             }
           },
           "ApiGatewayRestApi": {
@@ -464,6 +627,18 @@
                 "Ref": "ApiGatewayResourcePosts"
               },
               "PathPart": "{postId}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourcePostsPostidVarAttachmentVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourcePostsPostidVar"
+              },
+              "PathPart": "{attachment}",
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
               }
@@ -604,6 +779,51 @@
               }
             }
           },
+          "ApiGatewayMethodPostsPostidVarAttachmentVarOptions": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "AuthorizationType": "NONE",
+              "HttpMethod": "OPTIONS",
+              "MethodResponses": [
+                {
+                  "StatusCode": "200",
+                  "ResponseParameters": {
+                    "method.response.header.Access-Control-Allow-Origin": true,
+                    "method.response.header.Access-Control-Allow-Headers": true,
+                    "method.response.header.Access-Control-Allow-Methods": true
+                  },
+                  "ResponseModels": {}
+                }
+              ],
+              "RequestParameters": {},
+              "Integration": {
+                "Type": "MOCK",
+                "RequestTemplates": {
+                  "application/json": "{statusCode:200}"
+                },
+                "ContentHandling": "CONVERT_TO_TEXT",
+                "IntegrationResponses": [
+                  {
+                    "StatusCode": "200",
+                    "ResponseParameters": {
+                      "method.response.header.Access-Control-Allow-Origin": "'*'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'",
+                      "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+                    },
+                    "ResponseTemplates": {
+                      "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
+                    }
+                  }
+                ]
+              },
+              "ResourceId": {
+                "Ref": "ApiGatewayResourcePostsPostidVarAttachmentVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
           "ApiGatewayMethodGetpostsUseridVarGet": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
@@ -616,7 +836,10 @@
                 "Ref": "ApiGatewayRestApi"
               },
               "ApiKeyRequired": false,
-              "AuthorizationType": "NONE",
+              "AuthorizationType": "CUSTOM",
+              "AuthorizerId": {
+                "Ref": "AuthApiGatewayAuthorizer"
+              },
               "Integration": {
                 "IntegrationHttpMethod": "POST",
                 "Type": "AWS_PROXY",
@@ -645,7 +868,8 @@
                 }
               },
               "MethodResponses": []
-            }
+            },
+            "DependsOn": "AuthApiGatewayAuthorizer"
           },
           "ApiGatewayMethodPostsPost": {
             "Type": "AWS::ApiGateway::Method",
@@ -659,7 +883,10 @@
                 "Ref": "ApiGatewayRestApi"
               },
               "ApiKeyRequired": false,
-              "AuthorizationType": "NONE",
+              "AuthorizationType": "CUSTOM",
+              "AuthorizerId": {
+                "Ref": "AuthApiGatewayAuthorizer"
+              },
               "Integration": {
                 "IntegrationHttpMethod": "POST",
                 "Type": "AWS_PROXY",
@@ -688,7 +915,8 @@
                 }
               },
               "MethodResponses": []
-            }
+            },
+            "DependsOn": "AuthApiGatewayAuthorizer"
           },
           "ApiGatewayMethodPostsPostidVarPatch": {
             "Type": "AWS::ApiGateway::Method",
@@ -702,7 +930,10 @@
                 "Ref": "ApiGatewayRestApi"
               },
               "ApiKeyRequired": false,
-              "AuthorizationType": "NONE",
+              "AuthorizationType": "CUSTOM",
+              "AuthorizerId": {
+                "Ref": "AuthApiGatewayAuthorizer"
+              },
               "Integration": {
                 "IntegrationHttpMethod": "POST",
                 "Type": "AWS_PROXY",
@@ -731,7 +962,8 @@
                 }
               },
               "MethodResponses": []
-            }
+            },
+            "DependsOn": "AuthApiGatewayAuthorizer"
           },
           "ApiGatewayMethodPostsPostidVarDelete": {
             "Type": "AWS::ApiGateway::Method",
@@ -745,7 +977,10 @@
                 "Ref": "ApiGatewayRestApi"
               },
               "ApiKeyRequired": false,
-              "AuthorizationType": "NONE",
+              "AuthorizationType": "CUSTOM",
+              "AuthorizerId": {
+                "Ref": "AuthApiGatewayAuthorizer"
+              },
               "Integration": {
                 "IntegrationHttpMethod": "POST",
                 "Type": "AWS_PROXY",
@@ -764,7 +999,7 @@
                       ":lambda:path/2015-03-31/functions/",
                       {
                         "Fn::GetAtt": [
-                          "DeletePostLambdaFunction",
+                          "DeletePost2LambdaFunction",
                           "Arn"
                         ]
                       },
@@ -774,9 +1009,91 @@
                 }
               },
               "MethodResponses": []
+            },
+            "DependsOn": "AuthApiGatewayAuthorizer"
+          },
+          "ApiGatewayMethodPostsPostidVarAttachmentVarPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourcePostsPostidVarAttachmentVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "CUSTOM",
+              "AuthorizerId": {
+                "Ref": "AuthApiGatewayAuthorizer"
+              },
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "GetUploadUrlLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": "AuthApiGatewayAuthorizer"
+          },
+          "AuthApiGatewayAuthorizer": {
+            "Type": "AWS::ApiGateway::Authorizer",
+            "Properties": {
+              "IdentitySource": "method.request.header.Authorization",
+              "Name": "Auth",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "AuthorizerUri": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":apigateway:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":lambda:path/2015-03-31/functions/",
+                    {
+                      "Fn::GetAtt": [
+                        "AuthLambdaFunction",
+                        "Arn"
+                      ]
+                    },
+                    "/invocations"
+                  ]
+                ]
+              },
+              "Type": "TOKEN"
             }
           },
-          "ApiGatewayDeployment1613635305120": {
+          "ApiGatewayDeployment1613777425401": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -788,10 +1105,12 @@
               "ApiGatewayMethodGetpostsUseridVarOptions",
               "ApiGatewayMethodPostsOptions",
               "ApiGatewayMethodPostsPostidVarOptions",
+              "ApiGatewayMethodPostsPostidVarAttachmentVarOptions",
               "ApiGatewayMethodGetpostsUseridVarGet",
               "ApiGatewayMethodPostsPost",
               "ApiGatewayMethodPostsPostidVarPatch",
-              "ApiGatewayMethodPostsPostidVarDelete"
+              "ApiGatewayMethodPostsPostidVarDelete",
+              "ApiGatewayMethodPostsPostidVarAttachmentVarPost"
             ]
           },
           "GetPosts1LambdaPermissionApiGateway": {
@@ -800,6 +1119,43 @@
               "FunctionName": {
                 "Fn::GetAtt": [
                   "GetPosts1LambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "AuthLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "AuthLambdaFunction",
                   "Arn"
                 ]
               },
@@ -905,12 +1261,49 @@
               }
             }
           },
-          "DeletePostLambdaPermissionApiGateway": {
+          "DeletePost2LambdaPermissionApiGateway": {
             "Type": "AWS::Lambda::Permission",
             "Properties": {
               "FunctionName": {
                 "Fn::GetAtt": [
-                  "DeletePostLambdaFunction",
+                  "DeletePost2LambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "GetUploadUrlLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "GetUploadUrlLambdaFunction",
                   "Arn"
                 ]
               },
@@ -996,14 +1389,14 @@
                           "dynamodb:Scan",
                           "dynamodb:GetItem"
                         ],
-                        "Resource": "arn:aws:dynamodb:us-west-2:*:table/Posts3-dev"
+                        "Resource": "arn:aws:dynamodb:us-west-2:*:table/Posts8-dev"
                       },
                       {
                         "Effect": "Allow",
                         "Action": [
                           "dynamodb:Query"
                         ],
-                        "Resource": "arn:aws:dynamodb:us-west-2:*:table/Posts3-dev/index/PostIdIndex"
+                        "Resource": "arn:aws:dynamodb:us-west-2:*:table/Posts8-dev/index/PostIdIndex"
                       }
                     ]
                   }
@@ -1084,7 +1477,7 @@
                           "dynamodb:DeleteItem",
                           "dynamodb:UpdateItem"
                         ],
-                        "Resource": "arn:aws:dynamodb:us-west-2:*:table/Posts3-dev"
+                        "Resource": "arn:aws:dynamodb:us-west-2:*:table/Posts8-dev"
                       }
                     ]
                   }
@@ -1106,6 +1499,286 @@
                 ]
               },
               "ManagedPolicyArns": []
+            }
+          },
+          "UpdatePostIamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "serverless-forum-app",
+                        "dev",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:CreateLogGroup",
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/serverless-forum-app-dev-UpdatePost:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "dynamodb:Query",
+                          "dynamodb:Scan",
+                          "dynamodb:PutItem",
+                          "dynamodb:GetItem",
+                          "dynamodb:UpdateItem"
+                        ],
+                        "Resource": "arn:aws:dynamodb:us-west-2:*:table/Posts8-dev"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "serverless-forum-app",
+                    "dev",
+                    "UpdatePost",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "lambdaRole"
+                  ]
+                ]
+              },
+              "ManagedPolicyArns": []
+            }
+          },
+          "DeletePost2IamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "serverless-forum-app",
+                        "dev",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:CreateLogGroup",
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/serverless-forum-app-dev-DeletePost2:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "dynamodb:DeleteItem"
+                        ],
+                        "Resource": "arn:aws:dynamodb:us-west-2:*:table/Posts8-dev"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "serverless-forum-app",
+                    "dev",
+                    "DeletePost2",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "lambdaRole"
+                  ]
+                ]
+              },
+              "ManagedPolicyArns": []
+            }
+          },
+          "GetUploadUrlIamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "serverless-forum-app",
+                        "dev",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:CreateLogGroup",
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/serverless-forum-app-dev-GetUploadUrl:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "s3:PutObject",
+                          "s3:GetObject"
+                        ],
+                        "Resource": "arn:aws:s3:::serverless-udagram-postss-dev/*"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "serverless-forum-app",
+                    "dev",
+                    "GetUploadUrl",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "lambdaRole"
+                  ]
+                ]
+              },
+              "ManagedPolicyArns": []
+            }
+          },
+          "AttachmentsBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketName": "serverless-udagram-postss-dev",
+              "CorsConfiguration": {
+                "CorsRules": [
+                  {
+                    "AllowedOrigins": [
+                      "*"
+                    ],
+                    "AllowedHeaders": [
+                      "*"
+                    ],
+                    "AllowedMethods": [
+                      "GET",
+                      "PUT",
+                      "POST",
+                      "DELETE",
+                      "HEAD"
+                    ],
+                    "MaxAge": 3000
+                  }
+                ]
+              }
+            }
+          },
+          "BucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "PolicyDocument": {
+                "Id": "MyPolicy",
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Sid": "PublicReadForGetBucketObjects",
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "s3:GetObject",
+                    "Resource": "arn:aws:s3:::serverless-udagram-postss-dev/*"
+                  }
+                ]
+              },
+              "Bucket": {
+                "Ref": "AttachmentsBucket"
+              }
             }
           },
           "POSTDynamoDBTable": {
@@ -1132,7 +1805,7 @@
                 }
               ],
               "BillingMode": "PAY_PER_REQUEST",
-              "TableName": "Posts3-dev",
+              "TableName": "Posts8-dev",
               "GlobalSecondaryIndexes": [
                 {
                   "IndexName": "PostIdIndex",
@@ -1149,6 +1822,70 @@
               ]
             },
             "DeletionPolicy": "Retain"
+          },
+          "KMSKey": {
+            "Type": "AWS::KMS::Key",
+            "Properties": {
+              "Description": "KMS key to encrypt Auth0 secret",
+              "KeyPolicy": {
+                "Version": "2012-10-17",
+                "Id": "key-default-1",
+                "Statement": [
+                  {
+                    "Sid": "Allow administration of the key",
+                    "Effect": "Allow",
+                    "Principal": {
+                      "AWS": {
+                        "Fn::Join": [
+                          ":",
+                          [
+                            "arn:aws:iam:",
+                            {
+                              "Ref": "AWS::AccountId"
+                            },
+                            "root"
+                          ]
+                        ]
+                      }
+                    },
+                    "Action": [
+                      "kms:*"
+                    ],
+                    "Resource": "*"
+                  }
+                ]
+              }
+            }
+          },
+          "KMSKeyAlias": {
+            "Type": "AWS::KMS::Alias",
+            "Properties": {
+              "AliasName": "alias/auth0Keypoat-dev",
+              "TargetKeyId": {
+                "Ref": "KMSKey"
+              }
+            }
+          },
+          "PostAuth0Secret": {
+            "Type": "AWS::SecretsManager::Secret",
+            "Properties": {
+              "Name": "PostAuth0Secret-dev",
+              "Description": "Auth0 secret",
+              "KmsKeyId": {
+                "Ref": "KMSKey"
+              }
+            }
+          },
+          "RequestBodyValidator": {
+            "Type": "AWS::ApiGateway::RequestValidator",
+            "Properties": {
+              "Name": "request-body-validator",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ValidateRequestBody": true,
+              "ValidateRequestParameters": false
+            }
           }
         },
         "Outputs": {
@@ -1157,34 +1894,46 @@
               "Ref": "ServerlessDeploymentBucket"
             }
           },
+          "AuthLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "AuthLambdaVersionTWO819v8RBC1DjayNIp2ABYNK7nNzlthwO6ek3mP6N8"
+            }
+          },
           "HelloLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "HelloLambdaVersionthkaZfvearDdnBrJT6QiEeW0Nu6wnvkEljkmYjEUY"
+              "Ref": "HelloLambdaVersionrxfQneKhmYssJ9iOA4t60GJa57KWNGxONm9wYvqs6E"
             }
           },
           "GetPosts1LambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "GetPosts1LambdaVersion7gLR1SlJoqTXNmhVelLTE5fkI427FKp1NYOihQg4y0"
+              "Ref": "GetPosts1LambdaVersionvUTzHJhaGFeb9srep8Y2iERY3W0XmzikDYibdmiNozE"
             }
           },
           "CreatePostLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "CreatePostLambdaVersionzS12FmTEUAddiHhlyB43niygCKGbCdAqbjROQJztQ8"
+              "Ref": "CreatePostLambdaVersionqqP95zf8rXDztYEOrUxeS3meFpOeHDFYrAQGJLs"
             }
           },
           "UpdatePostLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "UpdatePostLambdaVersionOZUcXEOYLp9Xp6Y8KdC0dCYj2n5KNyaWYR2LEZl03Q"
+              "Ref": "UpdatePostLambdaVersion4ccvfl5IILmfaaHfkaWewQxuttlcs8f0Zs7KtSvo8"
             }
           },
-          "DeletePostLambdaFunctionQualifiedArn": {
+          "DeletePost2LambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "DeletePostLambdaVersion8b1hFjf8TfRdk2GDsV14c4v7Keh82HlkH9chTf8NM8"
+              "Ref": "DeletePost2LambdaVersiongXiNrO0l6ogdaIfbGtAlzykcHsCNuLxSF9Njv4gHB2k"
+            }
+          },
+          "GetUploadUrlLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "GetUploadUrlLambdaVersionQCGf19NSmPszqaTnbVDKFtnL74FONNx5ImfKuqQpfY"
             }
           },
           "ServiceEndpoint": {
@@ -1312,9 +2061,22 @@
         },
         "memory": 1024,
         "timeout": 6,
-        "runtime": "nodejs12.x",
+        "runtime": "nodejs10.x",
         "vpc": {},
-        "versionLogicalId": "HelloLambdaVersionthkaZfvearDdnBrJT6QiEeW0Nu6wnvkEljkmYjEUY"
+        "versionLogicalId": "HelloLambdaVersionrxfQneKhmYssJ9iOA4t60GJa57KWNGxONm9wYvqs6E"
+      },
+      "Auth": {
+        "handler": "src/lambda/auth/auth0Authorizer.handler",
+        "events": [],
+        "name": "serverless-forum-app-dev-Auth",
+        "package": {
+          "artifact": ".serverless\\serverless-forum-app.zip"
+        },
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs10.x",
+        "vpc": {},
+        "versionLogicalId": "AuthLambdaVersionTWO819v8RBC1DjayNIp2ABYNK7nNzlthwO6ek3mP6N8"
       },
       "GetPosts1": {
         "handler": "src/lambda/http/getPosts.handler",
@@ -1342,6 +2104,14 @@
                 ],
                 "allowCredentials": false
               },
+              "authorizer": {
+                "name": "Auth",
+                "arn": {
+                  "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"AuthLambdaPermissionApiGateway\"][\"Properties\"][\"FunctionName\"]"
+                },
+                "managedExternally": false,
+                "identitySource": "method.request.header.Authorization"
+              },
               "integration": "AWS_PROXY"
             }
           }
@@ -1360,9 +2130,9 @@
         },
         "memory": 1024,
         "timeout": 6,
-        "runtime": "nodejs12.x",
+        "runtime": "nodejs10.x",
         "vpc": {},
-        "versionLogicalId": "GetPosts1LambdaVersion7gLR1SlJoqTXNmhVelLTE5fkI427FKp1NYOihQg4y0"
+        "versionLogicalId": "GetPosts1LambdaVersionvUTzHJhaGFeb9srep8Y2iERY3W0XmzikDYibdmiNozE"
       },
       "CreatePost": {
         "handler": "src/lambda/http/createPost.handler",
@@ -1390,6 +2160,14 @@
                 ],
                 "allowCredentials": false
               },
+              "authorizer": {
+                "name": "Auth",
+                "arn": {
+                  "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"AuthLambdaPermissionApiGateway\"][\"Properties\"][\"FunctionName\"]"
+                },
+                "managedExternally": false,
+                "identitySource": "method.request.header.Authorization"
+              },
               "integration": "AWS_PROXY"
             }
           }
@@ -1405,9 +2183,9 @@
         },
         "memory": 1024,
         "timeout": 6,
-        "runtime": "nodejs12.x",
+        "runtime": "nodejs10.x",
         "vpc": {},
-        "versionLogicalId": "CreatePostLambdaVersionzS12FmTEUAddiHhlyB43niygCKGbCdAqbjROQJztQ8"
+        "versionLogicalId": "CreatePostLambdaVersionqqP95zf8rXDztYEOrUxeS3meFpOeHDFYrAQGJLs"
       },
       "UpdatePost": {
         "handler": "src/lambda/http/updatePost.handler",
@@ -1435,8 +2213,21 @@
                 ],
                 "allowCredentials": false
               },
+              "authorizer": {
+                "name": "Auth",
+                "arn": {
+                  "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"AuthLambdaPermissionApiGateway\"][\"Properties\"][\"FunctionName\"]"
+                },
+                "managedExternally": false,
+                "identitySource": "method.request.header.Authorization"
+              },
               "integration": "AWS_PROXY"
             }
+          }
+        ],
+        "iamRoleStatements": [
+          {
+            "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"UpdatePostIamRoleLambdaExecution\"][\"Properties\"][\"Policies\"][0][\"PolicyDocument\"][\"Statement\"][1]"
           }
         ],
         "name": "serverless-forum-app-dev-UpdatePost",
@@ -1445,11 +2236,11 @@
         },
         "memory": 1024,
         "timeout": 6,
-        "runtime": "nodejs12.x",
+        "runtime": "nodejs10.x",
         "vpc": {},
-        "versionLogicalId": "UpdatePostLambdaVersionOZUcXEOYLp9Xp6Y8KdC0dCYj2n5KNyaWYR2LEZl03Q"
+        "versionLogicalId": "UpdatePostLambdaVersion4ccvfl5IILmfaaHfkaWewQxuttlcs8f0Zs7KtSvo8"
       },
-      "DeletePost": {
+      "DeletePost2": {
         "handler": "src/lambda/http/deletePost.handler",
         "events": [
           {
@@ -1475,23 +2266,136 @@
                 ],
                 "allowCredentials": false
               },
+              "authorizer": {
+                "name": "Auth",
+                "arn": {
+                  "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"AuthLambdaPermissionApiGateway\"][\"Properties\"][\"FunctionName\"]"
+                },
+                "managedExternally": false,
+                "identitySource": "method.request.header.Authorization"
+              },
               "integration": "AWS_PROXY"
             }
           }
         ],
-        "name": "serverless-forum-app-dev-DeletePost",
+        "iamRoleStatements": [
+          {
+            "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"DeletePost2IamRoleLambdaExecution\"][\"Properties\"][\"Policies\"][0][\"PolicyDocument\"][\"Statement\"][1]"
+          }
+        ],
+        "name": "serverless-forum-app-dev-DeletePost2",
         "package": {
           "artifact": ".serverless\\serverless-forum-app.zip"
         },
         "memory": 1024,
         "timeout": 6,
-        "runtime": "nodejs12.x",
+        "runtime": "nodejs10.x",
         "vpc": {},
-        "versionLogicalId": "DeletePostLambdaVersion8b1hFjf8TfRdk2GDsV14c4v7Keh82HlkH9chTf8NM8"
+        "versionLogicalId": "DeletePost2LambdaVersiongXiNrO0l6ogdaIfbGtAlzykcHsCNuLxSF9Njv4gHB2k"
+      },
+      "GetUploadUrl": {
+        "handler": "src/lambda/http/getUploadUrl.handler",
+        "events": [
+          {
+            "http": {
+              "method": "post",
+              "path": "posts/{postId}/{attachment}",
+              "cors": {
+                "origins": [
+                  "*"
+                ],
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "POST"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent"
+                ],
+                "allowCredentials": false
+              },
+              "authorizer": {
+                "name": "Auth",
+                "arn": {
+                  "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"AuthLambdaPermissionApiGateway\"][\"Properties\"][\"FunctionName\"]"
+                },
+                "managedExternally": false,
+                "identitySource": "method.request.header.Authorization"
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "iamRoleStatements": [
+          {
+            "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"GetUploadUrlIamRoleLambdaExecution\"][\"Properties\"][\"Policies\"][0][\"PolicyDocument\"][\"Statement\"][1]"
+          }
+        ],
+        "name": "serverless-forum-app-dev-GetUploadUrl",
+        "package": {
+          "artifact": ".serverless\\serverless-forum-app.zip"
+        },
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs10.x",
+        "vpc": {},
+        "versionLogicalId": "GetUploadUrlLambdaVersionQCGf19NSmPszqaTnbVDKFtnL74FONNx5ImfKuqQpfY"
       }
     },
     "resources": {
       "Resources": {
+        "AttachmentsBucket": {
+          "Type": "AWS::S3::Bucket",
+          "Properties": {
+            "BucketName": "serverless-udagram-postss-dev",
+            "CorsConfiguration": {
+              "CorsRules": [
+                {
+                  "AllowedOrigins": [
+                    "*"
+                  ],
+                  "AllowedHeaders": [
+                    "*"
+                  ],
+                  "AllowedMethods": [
+                    "GET",
+                    "PUT",
+                    "POST",
+                    "DELETE",
+                    "HEAD"
+                  ],
+                  "MaxAge": 3000
+                }
+              ]
+            }
+          }
+        },
+        "BucketPolicy": {
+          "Type": "AWS::S3::BucketPolicy",
+          "Properties": {
+            "PolicyDocument": {
+              "Id": "MyPolicy",
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "PublicReadForGetBucketObjects",
+                  "Effect": "Allow",
+                  "Principal": "*",
+                  "Action": "s3:GetObject",
+                  "Resource": "arn:aws:s3:::serverless-udagram-postss-dev/*"
+                }
+              ]
+            },
+            "Bucket": {
+              "Ref": "AttachmentsBucket"
+            }
+          }
+        },
         "POSTDynamoDBTable": {
           "Type": "AWS::DynamoDB::Table",
           "Properties": {
@@ -1516,7 +2420,7 @@
               }
             ],
             "BillingMode": "PAY_PER_REQUEST",
-            "TableName": "Posts3-dev",
+            "TableName": "Posts8-dev",
             "GlobalSecondaryIndexes": [
               {
                 "IndexName": "PostIdIndex",
@@ -1533,6 +2437,70 @@
             ]
           },
           "DeletionPolicy": "Retain"
+        },
+        "KMSKey": {
+          "Type": "AWS::KMS::Key",
+          "Properties": {
+            "Description": "KMS key to encrypt Auth0 secret",
+            "KeyPolicy": {
+              "Version": "2012-10-17",
+              "Id": "key-default-1",
+              "Statement": [
+                {
+                  "Sid": "Allow administration of the key",
+                  "Effect": "Allow",
+                  "Principal": {
+                    "AWS": {
+                      "Fn::Join": [
+                        ":",
+                        [
+                          "arn:aws:iam:",
+                          {
+                            "Ref": "AWS::AccountId"
+                          },
+                          "root"
+                        ]
+                      ]
+                    }
+                  },
+                  "Action": [
+                    "kms:*"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        },
+        "KMSKeyAlias": {
+          "Type": "AWS::KMS::Alias",
+          "Properties": {
+            "AliasName": "alias/auth0Keypoat-dev",
+            "TargetKeyId": {
+              "Ref": "KMSKey"
+            }
+          }
+        },
+        "PostAuth0Secret": {
+          "Type": "AWS::SecretsManager::Secret",
+          "Properties": {
+            "Name": "PostAuth0Secret-dev",
+            "Description": "Auth0 secret",
+            "KmsKeyId": {
+              "Ref": "KMSKey"
+            }
+          }
+        },
+        "RequestBodyValidator": {
+          "Type": "AWS::ApiGateway::RequestValidator",
+          "Properties": {
+            "Name": "request-body-validator",
+            "RestApiId": {
+              "Ref": "ApiGatewayRestApi"
+            },
+            "ValidateRequestBody": true,
+            "ValidateRequestParameters": false
+          }
         }
       },
       "Outputs": {}
@@ -1547,7 +2515,6 @@
       "plugins": {
         "$ref": "$[\"service\"][\"plugins\"]"
       },
-      "frameworkVersion": "2",
       "provider": {
         "$ref": "$[\"service\"][\"provider\"]"
       },
@@ -1561,7 +2528,7 @@
     "isDashboardMonitoringPreconfigured": false
   },
   "package": {
-    "artifactDirectoryName": "serverless/serverless-forum-app/dev/1613635335197-2021-02-18T08:02:15.197Z",
+    "artifactDirectoryName": "serverless/serverless-forum-app/dev/1613777483169-2021-02-19T23:31:23.169Z",
     "artifact": ""
   }
 }

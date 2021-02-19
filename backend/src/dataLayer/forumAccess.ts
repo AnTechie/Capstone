@@ -1,13 +1,21 @@
 import * as AWS  from 'aws-sdk'
 import * as AWSXRAY from 'aws-xray-sdk'
 import { PostItem } from '../models/PostItem'
+import {UpdatePostRequest} from '../requests/UpdatePostRequest'
 
 const XAWS= AWSXRAY.captureAWS(AWS)
+const s3 = new XAWS.S3({
+    signatureVersion: 'v4'
+  })
+const bucketName = process.env.IMAGES_S3_BUCKET
+const urlExpiration = process.env.SIGNED_URL_EXPIRATION
 export class ForumAccess{
 
     private readonly postsTable = process.env.POSTS_TABLE
+  
+    private readonly postIdIndex = process.env.POST_ID_INDEX  
     private readonly docClient = new XAWS.DynamoDB.DocumentClient()
-   // private readonly postIdIndex = process.env.POST_ID_INDEX    
+  
     async createPost(postItem:PostItem):Promise<PostItem>
     {
         //logger.info("Entered Create Todo DAO")
@@ -24,19 +32,76 @@ export class ForumAccess{
     async getAllTodos(userId:string):Promise<PostItem[]>
     {
       //  logger.info("getAllTodos before dynamodb query start")
-console.log(userId)
-        const posts= await this.docClient.query({
+        console.log(userId)
+        const toDos= await this.docClient.query({
             TableName : this.postsTable,
-            IndexName : "PostIdIndex",
+            IndexName : this.postIdIndex,
             KeyConditionExpression: 'userId = :userId',
             ExpressionAttributeValues: {
                 ':userId': userId
             }
         }).promise()
-        //logger.info("getAllTodos before dynamodb query completed")
+       // logger.info("getAllTodos before dynamodb query completed")
 
-        const items=posts.Items 
+        const items=toDos.Items 
         return items as PostItem[]
     }
 
+    async deletePost(userId:string,postId:string):Promise<void>
+    {
+        try
+        {
+       // logger.info("deleteTodo dal")
+        console.log(postId)
+        console.log(userId)
+        console.log("deleteTodo dal")
+        var params = {
+            TableName:this.postsTable,
+            Key:{
+                'postId': postId,
+                'userId': userId
+            },
+        
+        };
+      await this.docClient.delete(params).promise()
+    }
+    catch(err)
+    {
+        console.log(err)
+    }
+    
+    
+      return
+    }
+    async updatePost(updatePost:UpdatePostRequest,userId:string,postId:string):Promise<UpdatePostRequest>
+    {
+       // logger.info("update dal")
+
+        var params = {
+            TableName:this.postsTable,
+            Key:{
+                'postId': postId,
+                'userId': userId
+            },
+            // ExpressionAttributeNames: {
+            //     '#todo_name': 'name',
+            //   },
+              ExpressionAttributeValues: {
+                ':postDetails': updatePost.postDetails,
+                ':sharePost': updatePost.sharePost,
+              },
+              UpdateExpression: 'SET  postDetails = :postDetails, sharePost = :sharePost',
+              ReturnValues: 'ALL_NEW',
+        };
+     await this.docClient.update(params).promise()
+     return updatePost
+    }
+    async getUploadUrl(imageId:string):Promise<string>
+    {
+        return s3.getSignedUrl('putObject', {
+            Bucket: bucketName,
+            Key: imageId,
+            Expires: urlExpiration
+          })
+        }     
 }
