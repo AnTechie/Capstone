@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-  - "8.10"
+  - 10
 cache:
   directories:
     - backend/node_modules
@@ -9,3 +9,4 @@ script:
   - cd backend
   - npm install
   - serverless deploy -v
+  
