@@ -25,6 +25,17 @@ provider:
       AUTH_0_SECRET_ID: PostAuth0Secret-${self:provider.stage}
       AUTH_0_SECRET_FIELD: Postauth0Secret
 
+custom:
+  documentation:
+    api:
+      info:
+        version: v1.0.0
+        title: Udagram API
+        description: Serverless application for posts
+    models:
+      - name: ToDoRequest
+        contentType: application/json
+        schema: ${file(models/todo-request.json)}
 
 functions:
   hello:
