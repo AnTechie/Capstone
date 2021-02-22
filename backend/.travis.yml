@@ -6,7 +6,5 @@ cache:
     - backend/node_modules
 script:
   - npm install -g serverless
-  - cd backend
   - npm install
   - serverless deploy -v
-  
