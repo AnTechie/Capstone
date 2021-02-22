@@ -1,10 +1,7 @@
 language: node_js
 node_js:
   - 10
-cache:
-  directories:
-    - backend/node_modules
+
 script:
-  - npm install -g serverless
-  - npm install
-  - serverless deploy -v
+  - echo "Scitps block"
+
