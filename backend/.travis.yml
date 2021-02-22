@@ -1,19 +1,11 @@
-
-
-services:
-  - serverless
-
-# Pre-testing installs
-install:
-  - echo "nothing needs to be installed"
-
-# Scripts to be run such as tests
-before_script:
-  - echo "no tests"
-
+language: node_js
+node_js:
+  - "8.10"
+cache:
+  directories:
+    - backend/node_modules
 script:
-  - serverless deploy -v # print the version for logging
-
-
-after_success:
-  - echo "nothing needs to be run"
+  - npm install -g serverless
+  - cd backend
+  - npm install
+  - serverless deploy -v
