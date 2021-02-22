@@ -2,7 +2,9 @@ import * as AWS  from 'aws-sdk'
 import * as AWSXRAY from 'aws-xray-sdk'
 import { PostItem } from '../models/PostItem'
 import {UpdatePostRequest} from '../requests/UpdatePostRequest'
+import { createLogger } from '../utils/logger'
 
+const logger = createLogger('Create')
 const XAWS= AWSXRAY.captureAWS(AWS)
 const s3 = new XAWS.S3({
     signatureVersion: 'v4'
@@ -18,7 +20,7 @@ export class ForumAccess{
   
     async createPost(postItem:PostItem):Promise<PostItem>
     {
-        //logger.info("Entered Create Todo DAO")
+        logger.info("Entered Create Todo DAO")
 
         await this.docClient.put({
             TableName: this.postsTable,
@@ -31,7 +33,7 @@ export class ForumAccess{
     
     async getAllTodos(userId:string):Promise<PostItem[]>
     {
-      //  logger.info("getAllTodos before dynamodb query start")
+       logger.info("getAllTodos before dynamodb query start")
         console.log(userId)
         const toDos= await this.docClient.query({
             TableName : this.postsTable,
@@ -41,7 +43,7 @@ export class ForumAccess{
                 ':userId': userId
             }
         }).promise()
-       // logger.info("getAllTodos before dynamodb query completed")
+        logger.info("getAllTodos before dynamodb query completed")
 
         const items=toDos.Items 
         return items as PostItem[]
@@ -51,7 +53,7 @@ export class ForumAccess{
     {
         try
         {
-       // logger.info("deleteTodo dal")
+        logger.info("deleteTodo dal")
         console.log(postId)
         console.log(userId)
         console.log("deleteTodo dal")
@@ -75,7 +77,7 @@ export class ForumAccess{
     }
     async updatePost(updatePost:UpdatePostRequest,userId:string,postId:string):Promise<UpdatePostRequest>
     {
-       // logger.info("update dal")
+        logger.info("update dal")
 
         var params = {
             TableName:this.postsTable,
@@ -83,9 +85,7 @@ export class ForumAccess{
                 'postId': postId,
                 'userId': userId
             },
-            // ExpressionAttributeNames: {
-            //     '#todo_name': 'name',
-            //   },
+
               ExpressionAttributeValues: {
                 ':postDetails': updatePost.postDetails,
                 ':sharePost': updatePost.sharePost,

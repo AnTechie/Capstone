@@ -1,6 +1,9 @@
 import 'source-map-support/register'
 import { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
 import {getAllposts} from '../../businessLogic/posts'
+import { createLogger } from '../../utils/logger'
+
+const logger = createLogger('Create')
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   console.log(event);
@@ -8,7 +11,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     const split=authorization.split(' ')
     const jwtToken=split[1]
   const result=await getAllposts(jwtToken)
- 
+ logger.info("get posts")
   return {
     statusCode: 201,
     headers: {

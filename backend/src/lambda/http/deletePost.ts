@@ -1,6 +1,9 @@
 import 'source-map-support/register'
 import { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
 import {deletePost} from '../../businessLogic/posts'
+import { createLogger } from '../../utils/logger'
+
+const logger = createLogger('Create')
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     console.log(event);
@@ -10,6 +13,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
     const jwtToken=split[1]
   try{
    await deletePost(jwtToken,postId)
+   logger.info("deleted")
    return {
     statusCode: 201,
     headers: {

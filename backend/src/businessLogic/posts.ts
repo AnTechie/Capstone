@@ -6,14 +6,16 @@ import {CreatePostRequest} from '../requests/CreatePostRequest'
 import { UpdatePostRequest } from '../requests/UpdatePostRequest'
 import {PostUpdate} from '../models/PostUpdate'
 import { getUserId } from '../auth/utils';
+import { createLogger } from '../utils/logger'
+
+const logger = createLogger('Create')
 
 const forumAccess=new ForumAccess()
 
 export async function CreatePostItem(createTodoRequest:CreatePostRequest,jwtToken:string):Promise<PostItem>
 {
-    console.log(jwtToken)
-   // logger.info("Entered Create Todo business")
-    //logger.info(createTodoRequest)
+   logger.info("Entered Create Todo business")
+    logger.info(createTodoRequest)
    const postId=uuid.v4()
    const userId=getUserId(jwtToken)
    const postItem={
@@ -28,27 +30,26 @@ export async function CreatePostItem(createTodoRequest:CreatePostRequest,jwtToke
 } 
 export async function getAllposts(jwtToken:string):Promise<PostItem[]>
 {   
-    //logger.info("getAllTodos business layer invoked")
+    logger.info("getAllTodos business layer invoked")
     console.log(jwtToken)
 
     return await forumAccess.getAllTodos(getUserId(jwtToken));
-   // return await forumAccess.getAllTodos("Anjani");
 }
 export async function deletePost( jwtToken: string,postId: string):Promise<void>
 {   
-   // logger.info("getAllTodos business layer invoked")
+    logger.info("getAllTodos business layer invoked")
     console.log(jwtToken);
-   //getUserId(jwtToken)
+   getUserId(jwtToken)
     await forumAccess.deletePost(getUserId(jwtToken),postId);
      return
 }
 export async function updatePost(updateTodo:UpdatePostRequest,jwtToken:string,postId:string):Promise<PostUpdate>
 {
-   // logger.info("Entered Create Todo business")
-   // logger.info(updateTodo)
+    logger.info("Entered Create Todo business")
+    logger.info(updateTodo)
     console.log(jwtToken)
     const userId=getUserId(jwtToken)
-    //logger.info(userId)
+    logger.info(userId)
   
     return await forumAccess.updatePost(updateTodo,userId,postId)
 }
