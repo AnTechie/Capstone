@@ -98,6 +98,7 @@ export class ForumAccess{
     }
     async getUploadUrl(imageId:string):Promise<string>
     {
+      console.log("imageId"+imageId)
         return s3.getSignedUrl('putObject', {
             Bucket: bucketName,
             Key: imageId,

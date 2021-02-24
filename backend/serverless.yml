@@ -7,7 +7,6 @@ plugins:
   - serverless-reqvalidator-plugin
 
 
-
 provider:
   name: aws
   runtime: nodejs10.x
@@ -35,7 +34,7 @@ custom:
     models:
       - name: ToDoRequest
         contentType: application/json
-        schema: ${file(models/todo-request.json)}
+        schema: ${file(src/models/post-request.json)}
 
 functions:
   hello:
@@ -71,6 +70,12 @@ functions:
         path: posts
         cors: true
         authorizer: Auth
+        reqValidatorName: RequestBodyValidator
+        documentation:
+            summary: Create a new todo
+            description: Create a new todo
+            requestModels:
+              'application/json': ToDoRequest
     iamRoleStatements:
       - Effect: Allow
         Action:
@@ -119,7 +124,7 @@ functions:
     events:
       - http:
           method: post
-          path: posts/{postId}/{attachment}
+          path: posts/{postId}
           cors: true
           authorizer: Auth
     iamRoleStatements:

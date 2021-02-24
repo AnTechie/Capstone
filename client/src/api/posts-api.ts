@@ -64,7 +64,8 @@ export async function getUploadUrl(
   postId: string
 ): Promise<string> {
   console.log('upload url');
-  const response = await Axios.post(`${apiEndpoint}/posts/${postId}/attachment`, '', {
+  console.log(postId);
+  const response = await Axios.post(`${apiEndpoint}/posts/${postId}`, '', {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${idToken}`
