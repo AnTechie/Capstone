@@ -7,9 +7,7 @@
         "type": "string"
       }
     },
-    "required": [
-      "postTitle"
-    ],
+    "required": ["postTitle"],
     "additionalProperties": false
   }
   
