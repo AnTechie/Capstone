@@ -43,7 +43,8 @@ export class EditPost extends React.PureComponent<
 
   handleSubmit = async (event: React.SyntheticEvent) => {
     event.preventDefault()
-
+    console.log('state');
+    console.log(this.state)
     try {
       if (!this.state.file) {
         alert('File should be selected')
@@ -55,7 +56,7 @@ export class EditPost extends React.PureComponent<
       console.log(uploadUrl)
       this.setUploadState(UploadState.UploadingFile)
       await uploadFile(uploadUrl, this.state.file)
-
+     
       alert('File was uploaded!')
     } catch (e) {
       alert('Could not upload a file: ' + e.message)

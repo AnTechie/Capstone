@@ -78,7 +78,6 @@ export class ForumAccess{
     async updatePost(updatePost:UpdatePostRequest,userId:string,postId:string):Promise<UpdatePostRequest>
     {
         logger.info("update dal")
-
         var params = {
             TableName:this.postsTable,
             Key:{
@@ -87,18 +86,34 @@ export class ForumAccess{
             },
 
               ExpressionAttributeValues: {
-                ':postDetails': updatePost.postDetails,
-                ':sharePost': updatePost.sharePost,
+                ':sharePost': updatePost.sharePost
               },
-              UpdateExpression: 'SET  postDetails = :postDetails, sharePost = :sharePost',
+              UpdateExpression: 'SET   sharePost = :sharePost',
               ReturnValues: 'ALL_NEW',
         };
      await this.docClient.update(params).promise()
      return updatePost
     }
-    async getUploadUrl(imageId:string):Promise<string>
+    async getUploadUrl(imageId:string,userId:string):Promise<string>
     {
       console.log("imageId"+imageId)
+      var attachmentUrl='https://serverless-udagram-postss-dev.s3-us-west-2.amazonaws.com/'+imageId
+
+      var params = {
+        TableName:this.postsTable,
+        Key:{
+            'postId': imageId,
+            'userId': userId
+        },
+
+          ExpressionAttributeValues: {
+            ':attachmentUrl': attachmentUrl,
+          },
+          UpdateExpression: 'SET  attachmentUrl = :attachmentUrl',
+          ReturnValues: 'ALL_NEW',
+    };
+ await this.docClient.update(params).promise()
+
         return s3.getSignedUrl('putObject', {
             Bucket: bucketName,
             Key: imageId,

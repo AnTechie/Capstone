@@ -16,8 +16,10 @@ export async function CreatePostItem(createTodoRequest:CreatePostRequest,jwtToke
 {
    logger.info("Entered Create Todo business")
     logger.info(createTodoRequest)
+
    const postId=uuid.v4()
    const userId=getUserId(jwtToken)
+
    const postItem={
     userId:userId,
     postId:postId,
@@ -53,8 +55,10 @@ export async function updatePost(updateTodo:UpdatePostRequest,jwtToken:string,po
   
     return await forumAccess.updatePost(updateTodo,userId,postId)
 }
-export async function getUploadUrl(imageID:string):Promise<string>
+export async function getUploadUrl(imageID:string,jwtToken:string):Promise<string>
 {
-    return await forumAccess.getUploadUrl(imageID)
+    const userId=getUserId(jwtToken)
+
+    return await forumAccess.getUploadUrl(imageID,userId)
 }
 

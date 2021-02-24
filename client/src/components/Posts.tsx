@@ -48,11 +48,11 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
   onTodoCreate = async (event: React.ChangeEvent<HTMLButtonElement>) => {
     try {
       const dueDate = this.calculateDueDate()
-      
+      console.log('state');
+      console.log(this.state)
+    
       const newTodo = await createTodo(this.props.auth.getIdToken(), {
-        postTitle:this.state.newTodoName,
-        postDetails:'JSM',
-        sharePost:false
+        postTitle:this.state.newTodoName
       })
       this.setState({
         todos: [...this.state.todos, newTodo],

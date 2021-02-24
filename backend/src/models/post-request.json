@@ -5,15 +5,10 @@
     "properties": {
       "postTitle": {
         "type": "string"
-      },
-     
-      "sharePost": {
-        "type": "boolean"
       }
     },
     "required": [
-      "postTitle",
-      "sharePost"
+      "postTitle"
     ],
     "additionalProperties": false
   }

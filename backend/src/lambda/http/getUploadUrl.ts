@@ -9,8 +9,10 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
 
 //logger.info("generateuploadurl lambda called")
  const attachment = event.pathParameters.postId
-
- const url =await getUploadUrl(attachment)
+ const authorization=event.headers.Authorization
+    const split=authorization.split(' ')
+    const jwtToken=split[1]
+ const url =await getUploadUrl(attachment,jwtToken)
 
   return {
     statusCode: 201,
