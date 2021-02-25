@@ -5,6 +5,7 @@ plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
   - serverless-reqvalidator-plugin
+  - serverless-aws-documentation
 
 
 provider:
@@ -17,7 +18,7 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-west-2'}
   environment:
-      POSTS_TABLE: Posts8-${self:provider.stage}
+      POSTS_TABLE: Posts9-${self:provider.stage}
       POST_ID_INDEX: PostIdIndex
       IMAGES_S3_BUCKET: serverless-udagram-postss-${self:provider.stage}
       SIGNED_URL_EXPIRATION: 300
